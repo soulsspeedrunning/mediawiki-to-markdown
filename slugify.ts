@@ -10,6 +10,7 @@ const decodedReplacements = [
 	["'", ''],
 	['(', ''],
 	[')', ''],
+	['/', ''],
 ]
 
 export function slugify(input: string) {

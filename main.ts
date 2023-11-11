@@ -62,7 +62,7 @@ async function getHtml(url: string) {
 	return text
 }
 
-async function convert(url: string, ouput: string) {
+async function convert(url: string, ouput: string | null) {
 	if (done.has(url)) return
 	done.add(url)
 
@@ -94,7 +94,7 @@ async function convert(url: string, ouput: string) {
 						if (to) {
 							node.url = hash ? `/${to}#${hash}` : `/${to}`
 						} else {
-							node.url = slugify(node.url)
+							node.url = `/${slugify(node.url)}`
 						}
 
 						children.push(convert(withoutSlash, to ?? withoutSlash))
@@ -111,7 +111,7 @@ title: "${h1.text()}"
 
 ${String(file)}`)
 
-	const filePath = `${OUTPUT}/${slugify(ouput)}.mdoc`
+	const filePath = `${OUTPUT}/${slugify(ouput ?? url)}.mdoc`
 	const dirname = path.dirname(filePath)
 	await fs.mkdir(dirname, { recursive: true })
 	await fs.writeFile(filePath, markdown)
@@ -127,7 +127,9 @@ export async function sync() {
 		force: true,
 	})
 
-	await convert(`Main_Page`, 'index')
+	await Promise.allSettled(
+		[...redirects.entries()].map(([input, output]) => convert(input, output)),
+	)
 
 	console.log(
 		`{ cached: ${cached}, downloaded: ${downloaded}, notFound: ${notFound} }`,
